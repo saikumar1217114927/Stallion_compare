@@ -32,6 +32,7 @@
   .range{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
   .range input,.range select{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font:inherit}
   #amount{width:120px;font-weight:600}
+  .range input:disabled{opacity:.55;cursor:not-allowed}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
   .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
   .stat .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
@@ -68,8 +69,6 @@
       </div>
       <div class="range">
         <label>Amount ₹ <input type="number" id="amount" value="100" min="1" step="any"></label>
-        <label>From <input type="date" id="fromDate"></label>
-        <label>To <input type="date" id="toDate"></label>
         <select id="quick">
           <option value="all">All data</option>
           <option value="3m">Last 3 months</option>
@@ -77,8 +76,10 @@
           <option value="ytd">Year to date</option>
           <option value="1y">Last 1 year</option>
           <option value="3y">Last 3 years</option>
-          <option value="custom" hidden>Custom</option>
+          <option value="custom">Custom dates</option>
         </select>
+        <label>From <input type="date" id="fromDate" disabled></label>
+        <label>To <input type="date" id="toDate" disabled></label>
       </div>
     </div>
 
@@ -384,11 +385,14 @@ $('tabs').addEventListener('click', e => {
   render();
 });
 $('amount').addEventListener('input', render);
-$('fromDate').addEventListener('change', () => { $('quick').value = 'custom'; render(); });
-$('toDate').addEventListener('change', () => { $('quick').value = 'custom'; render(); });
+$('fromDate').addEventListener('change', render);
+$('toDate').addEventListener('change', render);
 $('quick').addEventListener('change', () => {
   if(!ALL.length) return;
   const last = ALL[ALL.length - 1].d, v = $('quick').value;
+  // Dates are editable only with "Custom dates"; presets fill them in
+  $('fromDate').disabled = $('toDate').disabled = v !== 'custom';
+  if(v === 'custom') return;
   let from = new Date(ALL[0].d);
   const back = m => { const d = new Date(last); d.setMonth(d.getMonth() - m); return d; };
   if(v === '3m') from = back(3);
