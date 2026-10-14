@@ -353,7 +353,9 @@ function renderChart(rows, amt){
   // Zoom the axis around the invested amount so small differences are visible
   const all = fv.concat(bv, [amt]);
   const lo = Math.min(...all), hi = Math.max(...all), padY = (hi - lo) * 0.1 || amt * 0.01;
-  const step = Math.pow(10, Math.floor(Math.log10((hi - lo + 2 * padY) / 5)));   // round axis ends
+  // Pick a round tick step (1, 2 or 5 × 10^n) giving about 6 ticks, and align the axis ends to it
+  const raw = (hi - lo + 2 * padY) / 6, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 5, 10].map(m => m * mag).find(x => x >= raw);
 
   if(barChart) barChart.destroy();
   barChart = new Chart($('barChart'), {
@@ -373,7 +375,7 @@ function renderChart(rows, amt){
       }}}},
       scales: {x: {ticks: {maxTicksLimit: 12, autoSkip: true}, grid: {display: false}},
                y: {min: Math.max(0, Math.floor((lo - padY) / step) * step), max: Math.ceil((hi + padY) / step) * step, grid: {color: grid},
-                   ticks: {callback: v => '₹' + v.toLocaleString('en-IN')}}}
+                   ticks: {stepSize: step, callback: v => '₹' + v.toLocaleString('en-IN')}}}
     }
   });
 }
