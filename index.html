@@ -353,6 +353,7 @@ function renderChart(rows, amt){
   // Zoom the axis around the invested amount so small differences are visible
   const all = fv.concat(bv, [amt]);
   const lo = Math.min(...all), hi = Math.max(...all), padY = (hi - lo) * 0.1 || amt * 0.01;
+  const step = Math.pow(10, Math.floor(Math.log10((hi - lo + 2 * padY) / 5)));   // round axis ends
 
   if(barChart) barChart.destroy();
   barChart = new Chart($('barChart'), {
@@ -371,11 +372,21 @@ function renderChart(rows, amt){
         return `${c.dataset.label}: ${fmtRs(c.parsed.y)} (${fmtPct(ret)})`;
       }}}},
       scales: {x: {ticks: {maxTicksLimit: 12, autoSkip: true}, grid: {display: false}},
-               y: {min: Math.max(0, lo - padY), max: hi + padY, grid: {color: grid},
+               y: {min: Math.max(0, Math.floor((lo - padY) / step) * step), max: Math.ceil((hi + padY) / step) * step, grid: {color: grid},
                    ticks: {callback: v => '₹' + v.toLocaleString('en-IN')}}}
     }
   });
 }
+
+// Hide the tooltip when the mouse leaves the chart or the page scrolls, so it never stays stuck
+function hideTooltip(){
+  if(!barChart) return;
+  barChart.setActiveElements([]);
+  barChart.tooltip.setActiveElements([], {x: 0, y: 0});
+  barChart.update('none');
+}
+$('barChart').addEventListener('mouseleave', hideTooltip);
+window.addEventListener('scroll', hideTooltip, {passive: true});
 
 /* ---------- Controls ---------- */
 $('tabs').addEventListener('click', e => {
