@@ -7,26 +7,23 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  /* ====== Change the Excel file name here if needed (see CONFIG in script) ====== */
   :root{
     --bg:#f6f7f9; --card:#ffffff; --text:#1b1f24; --muted:#5f6b7a; --border:#e3e7ec;
-    --accent:#1f6feb; --fund:#1f6feb; --bench:#e8833a; --pos:#13804a; --neg:#c62828;
-    --pos-bg:#e7f6ee; --neg-bg:#fdecec; --tab:#eef1f5;
+    --accent:#1f6feb; --fund:#1f6feb; --bench:#e8833a; --pos:#13804a; --neg:#c62828; --tab:#eef1f5;
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --bg:#0f1216; --card:#171b21; --text:#e6e9ee; --muted:#9aa5b4; --border:#2a3038;
-      --accent:#4c8dff; --fund:#4c8dff; --bench:#f0a05a; --pos:#3fbf7f; --neg:#ff6b6b;
-      --pos-bg:#123124; --neg-bg:#3a1a1a; --tab:#20262e;
+      --accent:#4c8dff; --fund:#4c8dff; --bench:#f0a05a; --pos:#3fbf7f; --neg:#ff6b6b; --tab:#20262e;
     }
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);
     font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-  .wrap{max-width:1200px;margin:0 auto;padding:20px 16px 40px}
-  header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
   h1{font-size:22px;margin:0}
-  .sub{color:var(--muted);font-size:13px}
+  h2{font-size:15px;margin:0 0 10px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
   .controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
   .tabs{display:flex;flex-wrap:wrap;background:var(--tab);border-radius:10px;padding:4px;gap:4px}
@@ -34,50 +31,32 @@
   .tabs button.active{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
   .range{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
   .range input,.range select{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 8px;font:inherit}
-  .btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:13px}
-  .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+  #amount{width:120px;font-weight:600}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
   .stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
   .stat .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-  .stat .v{font-size:22px;font-weight:700;margin-top:4px}
-  .stat .s{color:var(--muted);font-size:12px}
+  .stat .v{font-size:24px;font-weight:700;margin-top:4px}
+  .stat .s{font-size:13px}
   .pos{color:var(--pos)} .neg{color:var(--neg)}
-  .charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  @media (max-width:860px){.charts{grid-template-columns:1fr}}
-  .chartbox{position:relative;height:320px}
-  h2{font-size:15px;margin:0 0 10px}
-  .tablewrap{overflow-x:auto}
+  .chartbox{position:relative;height:340px}
+  .legend{display:flex;gap:16px;font-size:13px;margin-bottom:8px;flex-wrap:wrap}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+  .tablewrap{overflow-x:auto;max-height:520px;overflow-y:auto}
   table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
   th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right}
   th:first-child,td:first-child{text-align:left}
   th{position:sticky;top:0;background:var(--card);color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
-  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600}
-  .tag.pos{background:var(--pos-bg)} .tag.neg{background:var(--neg-bg)}
   .note{font-size:12px;color:var(--muted)}
   .msg{padding:24px;text-align:center}
   .hidden{display:none !important}
-  .legend{display:flex;gap:16px;font-size:13px;margin-bottom:8px;flex-wrap:wrap}
-  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div>
-      <h1>Stallion Core Fund vs BSE 500</h1>
-      <div class="sub" id="dataInfo">Loading data…</div>
-    </div>
-    <div class="range">
-      <button class="btn ghost" id="reloadBtn" title="Reload the Excel file">↻ Refresh data</button>
-    </div>
-  </header>
+  <h1>Stallion Core Fund vs BSE 500</h1>
+  <div class="sub" id="dataInfo">Loading data…</div>
 
-  <!-- Shown only if the Excel file could not be loaded -->
-  <div class="card msg hidden" id="loadError">
-    <p id="loadErrorText"></p>
-    <p class="note">You can still view a file from your computer (it is not uploaded anywhere):</p>
-    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-  </div>
+  <div class="card msg hidden" id="loadError">Data is not available right now. Please try again later.</div>
 
   <div id="app" class="hidden">
     <div class="card controls">
@@ -88,117 +67,74 @@
         <button data-p="fy">Yearly (FY Apr–Mar)</button>
       </div>
       <div class="range">
+        <label>Amount ₹ <input type="number" id="amount" value="100" min="1" step="any"></label>
         <label>From <input type="date" id="fromDate"></label>
         <label>To <input type="date" id="toDate"></label>
         <select id="quick">
           <option value="all">All data</option>
-          <option value="1m">Last 1 month</option>
           <option value="3m">Last 3 months</option>
           <option value="6m">Last 6 months</option>
           <option value="ytd">Year to date</option>
           <option value="1y">Last 1 year</option>
           <option value="3y">Last 3 years</option>
-          <option value="5y">Last 5 years</option>
+          <option value="custom" hidden>Custom</option>
         </select>
       </div>
     </div>
 
     <div class="stats" id="stats"></div>
 
-    <div class="charts">
-      <div class="card">
-        <h2>Growth of ₹100 (selected range)</h2>
-        <div class="legend">
-          <span><span class="dot" style="background:var(--fund)"></span>Stallion Core</span>
-          <span><span class="dot" style="background:var(--bench)"></span>BSE 500</span>
-        </div>
-        <div class="chartbox"><canvas id="growthChart"></canvas></div>
+    <div class="card">
+      <h2 id="barTitle"></h2>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--fund)"></span>Stallion Core</span>
+        <span><span class="dot" style="background:var(--bench)"></span>BSE 500</span>
       </div>
-      <div class="card">
-        <h2 id="barTitle">Weekly returns</h2>
-        <div class="legend">
-          <span><span class="dot" style="background:var(--fund)"></span>Stallion Core</span>
-          <span><span class="dot" style="background:var(--bench)"></span>BSE 500</span>
-        </div>
-        <div class="chartbox"><canvas id="barChart"></canvas></div>
-      </div>
+      <div class="chartbox"><canvas id="barChart"></canvas></div>
     </div>
 
     <div class="card">
-      <div class="controls" style="margin-bottom:10px">
-        <h2 id="tableTitle" style="margin:0">Weekly comparison</h2>
-        <button class="btn ghost" id="csvBtn">Download CSV</button>
-      </div>
+      <h2 id="tableTitle"></h2>
       <div class="tablewrap">
         <table>
-          <thead>
-            <tr>
-              <th>Period</th><th>Start</th><th>End</th>
-              <th>Stallion NAV</th><th>Stallion Return</th>
-              <th>BSE 500</th><th>BSE 500 Return</th>
-              <th>Difference</th><th>Result</th>
-            </tr>
-          </thead>
+          <thead id="thead"></thead>
           <tbody id="tbody"></tbody>
         </table>
       </div>
-      <p class="note">Return for each period = last NAV of the period vs last NAV of the previous period.
-        The first period (marked *) is measured from its own first NAV, so it may be partial.
-        Difference = Stallion return − BSE 500 return (percentage points).</p>
-    </div>
-
-    <div class="card">
-      <h2>Data check — how dates were matched</h2>
-      <div id="checkSummary" class="note" style="font-size:13px"></div>
-      <details style="margin-top:8px"><summary style="cursor:pointer">Show unmatched dates</summary>
-        <div id="checkDetail" class="note" style="margin-top:8px;max-height:260px;overflow:auto"></div>
-      </details>
+      <p class="note">Each row shows what the amount invested at the start of that period was worth at its end.
+        * First period may be partial (measured from the first available NAV).</p>
     </div>
   </div>
 </div>
 
 <script>
-/* =================== CONFIG =================== */
-// Name of the Excel file in the same GitHub folder as this index.html.
-// To update data: replace this file in the repo with the same name.
-const CONFIG = { DATA_FILE: 'data.xlsx' };
-/* ============================================== */
+// Excel file in the same repo folder as this page. To update data, replace it with the same name.
+const DATA_FILE = 'data.xlsx';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const PERIOD_NAMES = { week:'Weekly', month:'Monthly', year:'Yearly (Calendar)', fy:'Yearly (FY Apr–Mar)' };
-let ALL = [];          // [{d:Date, f:Number, b:Number}]
+let ALL = [];          // [{d:Date, f:fund NAV, b:BSE 500}]
 let period = 'week';
-let currentRows = [];
-let growthChart, barChart;
+let barChart;
 
 const $ = id => document.getElementById(id);
 
 /* ---------- Loading ---------- */
-async function loadFromRepo(){
-  $('dataInfo').textContent = 'Loading data…';
+async function load(){
   try{
-    const res = await fetch(CONFIG.DATA_FILE + '?v=' + Date.now(), {cache:'no-store'});
+    const res = await fetch(DATA_FILE + '?v=' + Date.now(), {cache:'no-store'});
     if(!res.ok) throw new Error('HTTP ' + res.status);
-    const buf = await res.arrayBuffer();
-    handleWorkbook(XLSX.read(buf, {type:'array'}), CONFIG.DATA_FILE);
+    handleWorkbook(XLSX.read(await res.arrayBuffer(), {type:'array'}));
   }catch(e){
-    showError(`Could not load "${CONFIG.DATA_FILE}" (${e.message}). Make sure the Excel file is uploaded to the same folder as index.html with exactly this name.`);
+    console.error(e);
+    showError();
   }
 }
-
-function showError(text){
+function showError(){
   $('app').classList.add('hidden');
   $('loadError').classList.remove('hidden');
-  $('loadErrorText').textContent = text;
-  $('dataInfo').textContent = 'No data loaded';
+  $('dataInfo').textContent = '';
 }
-
-$('fileInput').addEventListener('change', async e => {
-  const file = e.target.files[0]; if(!file) return;
-  const buf = await file.arrayBuffer();
-  handleWorkbook(XLSX.read(buf, {type:'array'}), file.name);
-});
-$('reloadBtn').addEventListener('click', loadFromRepo);
 
 /* ---------- Parsing ---------- */
 function toDate(v){
@@ -211,7 +147,7 @@ function toDate(v){
   const s = String(v).trim();
   let m;
   if((m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))) return new Date(+m[1], +m[2]-1, +m[3]);
-  if((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){           // dd-mm-yyyy (Indian format)
+  if((m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/))){           // dd-mm-yyyy
     let y = +m[3]; if(y < 100) y += 2000;
     return new Date(y, +m[2]-1, +m[1]);
   }
@@ -230,7 +166,7 @@ function toNum(v){
   return parseFloat(String(v).replace(/[,₹\s]/g, ''));
 }
 
-// Find the sheet + header row that has the BSE / Stallion columns (checks every sheet)
+// Find the sheet + header row that has the date and BSE 500 columns
 function findTable(wb){
   let best = null;
   for(const sn of wb.SheetNames){
@@ -238,8 +174,8 @@ function findTable(wb){
     for(let h = 0; h < Math.min(rows.length, 15); h++){
       const hdr = rows[h].map(c => String(c).toLowerCase().trim());
       if(hdr.some(c => c.includes('date')) && hdr.some(c => c.includes('bse') || c.includes('500'))){
-        const n = rows.length - h - 1;           // prefer the sheet with the most data rows
-        if(!best || n > best.n) best = {rows, h, hdr, sheet: sn, n};
+        const n = rows.length - h - 1;
+        if(!best || n > best.n) best = {rows, h, hdr, n};
         break;
       }
     }
@@ -247,23 +183,20 @@ function findTable(wb){
   return best;
 }
 
-function handleWorkbook(wb, name){
+function handleWorkbook(wb){
   const t = findTable(wb);
-  if(!t){
-    showError(`"${name}" was read but no header row with a date column and a BSE 500 column was found.`);
-    return;
-  }
+  if(!t) return showError();
   const {rows, h, hdr} = t;
   const isFund = c => c.includes('stallion') || c.includes('fund');
   const isBse = c => c.includes('bse') || c.includes('500');
   const find = fn => hdr.findIndex(fn);
 
-  // Layout A (separate dates): BSE Date | BSE 500 NAV | Stallion NAV Date | Stallion NAV
+  // Layout A: BSE Date | BSE 500 NAV | Stallion NAV Date | Stallion NAV
   let bd = find(c => isBse(c) && c.includes('date'));
   let bn = find(c => isBse(c) && !c.includes('date'));
   let sd = find(c => isFund(c) && c.includes('date'));
   let sn = find(c => isFund(c) && !c.includes('date'));
-  // Layout B (one date column): NAV Date | Stallion NAV | BSE 500 NAV
+  // Layout B: Date | Stallion NAV | BSE 500 NAV
   if(bd < 0 || sd < 0){
     const cd = find(c => c.includes('date'));
     bd = sd = cd < 0 ? 0 : cd;
@@ -271,7 +204,6 @@ function handleWorkbook(wb, name){
   if(bn < 0) bn = 2;
   if(sn < 0) sn = 1;
 
-  // Read the two series independently
   const bseMap = new Map(), fundMap = new Map();
   for(let i = h + 1; i < rows.length; i++){
     const r = rows[i];
@@ -281,74 +213,39 @@ function handleWorkbook(wb, name){
     if(d2 && isFinite(v2) && v2 > 0) fundMap.set(d2.getTime(), v2);
   }
 
-  // Match by date: for every Stallion NAV date, take the BSE 500 value of the same date.
-  // If BSE has no value that day, use the latest earlier BSE value (within 7 days).
+  // For each Stallion NAV date use the BSE 500 close of the same day,
+  // or the latest earlier BSE close within 7 days.
   const bseDates = [...bseMap.keys()].sort((a, b) => a - b);
-  const prevBse = t0 => {             // latest BSE date <= t0
+  const prevBse = t0 => {
     let lo = 0, hi = bseDates.length - 1, ans = -1;
     while(lo <= hi){ const m = (lo + hi) >> 1; if(bseDates[m] <= t0){ ans = m; lo = m + 1; } else hi = m - 1; }
     return ans < 0 ? null : bseDates[ans];
   };
-  const check = {exact: 0, filled: [], skipped: [], bseOnly: [], bseAfter: 0, bseBefore: 0, sheet: t.sheet};
   const out = [];
   for(const t0 of [...fundMap.keys()].sort((a, b) => a - b)){
-    if(bseMap.has(t0)){ out.push({d: new Date(t0), f: fundMap.get(t0), b: bseMap.get(t0)}); check.exact++; continue; }
-    const p = prevBse(t0);
-    if(p != null && (t0 - p) / 864e5 <= 7){
-      out.push({d: new Date(t0), f: fundMap.get(t0), b: bseMap.get(p)});
-      check.filled.push({d: new Date(t0), used: new Date(p)});
-    } else check.skipped.push(new Date(t0));
+    const p = bseMap.has(t0) ? t0 : prevBse(t0);
+    if(p != null && (t0 - p) / 864e5 <= 7) out.push({d: new Date(t0), f: fundMap.get(t0), b: bseMap.get(p)});
   }
-  if(out.length){
-    const first = out[0].d.getTime(), last = out[out.length - 1].d.getTime();
-    for(const t0 of bseDates){
-      if(t0 < first) check.bseBefore++;
-      else if(t0 > last) check.bseAfter++;
-      else if(!fundMap.has(t0)) check.bseOnly.push(new Date(t0));
-    }
-  }
-  check.bseTotal = bseMap.size; check.fundTotal = fundMap.size;
   ALL = out;
+  if(ALL.length < 2) return showError();
 
-  if(ALL.length < 2){
-    showError(`"${name}" was read but fewer than 2 matching dates were found. Expected columns: BSE Date | BSE 500 NAV | Stallion NAV Date | Stallion Core fund NAV.`);
-    return;
-  }
-  renderCheck(check);
   $('loadError').classList.add('hidden');
   $('app').classList.remove('hidden');
-  $('dataInfo').textContent = `${ALL.length} NAV records · ${fmtDate(ALL[0].d)} to ${fmtDate(ALL[ALL.length-1].d)} · Source: ${name}`;
-  $('fromDate').value = isoStr(ALL[0].d);
-  $('toDate').value = isoStr(ALL[ALL.length-1].d);
-  $('fromDate').min = $('toDate').min = isoStr(ALL[0].d);
-  $('fromDate').max = $('toDate').max = isoStr(ALL[ALL.length-1].d);
-  $('quick').value = 'all';
+  $('dataInfo').textContent = `NAV data from ${fmtDate(ALL[0].d)} to ${fmtDate(ALL[ALL.length-1].d)}`;
+  const lo = isoStr(ALL[0].d), hi = isoStr(ALL[ALL.length-1].d);
+  $('fromDate').value = $('fromDate').min = $('toDate').min = lo;
+  $('toDate').value = $('fromDate').max = $('toDate').max = hi;
   render();
-}
-
-function renderCheck(c){
-  const li = (arr, f) => arr.length ? '<ul style="margin:4px 0 10px 18px;padding:0">' + arr.map(f).map(x => `<li>${x}</li>`).join('') + '</ul>' : '<p>None</p>';
-  $('checkSummary').innerHTML = `
-    Sheet used: <b>${c.sheet}</b> · Stallion NAV dates: <b>${c.fundTotal}</b> · BSE 500 dates: <b>${c.bseTotal}</b><br>
-    ✔ <b>${c.exact}</b> Stallion dates matched a BSE 500 value on the same date.<br>
-    ${c.filled.length ? `↺ <b>${c.filled.length}</b> Stallion dates had no BSE value that day, so the previous BSE close was used.<br>` : ''}
-    ${c.skipped.length ? `✖ <b>${c.skipped.length}</b> Stallion dates had no nearby BSE value and were left out.<br>` : ''}
-    ${c.bseOnly.length ? `• <b>${c.bseOnly.length}</b> BSE 500 dates have no Stallion NAV and were ignored (the fund NAV is missing for those days).<br>` : ''}
-    ${c.bseAfter ? `• <b>${c.bseAfter}</b> BSE 500 dates are after the last Stallion NAV date and were ignored.<br>` : ''}
-    ${c.bseBefore ? `• <b>${c.bseBefore}</b> BSE 500 dates are before the first Stallion NAV date and were ignored.<br>` : ''}`;
-  $('checkDetail').innerHTML =
-    '<b>BSE 500 dates with no Stallion NAV (ignored):</b>' + li(c.bseOnly, d => fmtDate(d)) +
-    '<b>Stallion dates where the previous BSE close was used:</b>' + li(c.filled, x => `${fmtDate(x.d)} → BSE of ${fmtDate(x.used)}`) +
-    '<b>Stallion dates left out:</b>' + li(c.skipped, d => fmtDate(d));
 }
 
 /* ---------- Helpers ---------- */
 const pad = n => String(n).padStart(2, '0');
 const isoStr = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const fmtDate = d => `${pad(d.getDate())}-${MONTHS[d.getMonth()]}-${d.getFullYear()}`;
-const fmtNum = n => n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtRs = n => '₹' + n.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
 const fmtPct = (x, pp) => (x >= 0 ? '+' : '') + (x * 100).toFixed(2) + (pp ? ' pp' : '%');
 const cls = x => x >= 0 ? 'pos' : 'neg';
+const amount = () => { const a = parseFloat($('amount').value); return isFinite(a) && a > 0 ? a : 100; };
 
 function isoWeek(d){
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
@@ -362,10 +259,9 @@ function keyOf(d, p){
   if(p === 'week') return isoWeek(d);
   if(p === 'month') return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
   if(p === 'year') return String(d.getFullYear());
-  const fy = d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1;
-  return String(fy);
+  return String(d.getMonth() >= 3 ? d.getFullYear() : d.getFullYear() - 1);
 }
-function labelOf(key, first, last, p){
+function labelOf(key, last, p){
   if(p === 'week') return `Wk ending ${fmtDate(last.d)}`;
   if(p === 'month') return `${MONTHS[last.d.getMonth()]} ${last.d.getFullYear()}`;
   if(p === 'year') return key;
@@ -378,6 +274,7 @@ function filtered(){
   return ALL.filter(r => r.d >= from && r.d <= to);
 }
 
+// Return of each period = last NAV of the period vs last NAV of the previous period
 function periodRows(data, p){
   const groups = [];
   let cur = null;
@@ -389,13 +286,11 @@ function periodRows(data, p){
   const out = [];
   let prev = null;
   for(const g of groups){
-    const first = g.items[0], last = g.items[g.items.length - 1];
-    const base = prev || first;
-    const partial = !prev;
-    if(partial && g.items.length < 2){ prev = last; continue; } // nothing to measure
+    const last = g.items[g.items.length - 1];
+    const base = prev || g.items[0];
+    if(!prev && g.items.length < 2){ prev = last; continue; }
     const fr = last.f / base.f - 1, br = last.b / base.b - 1;
-    out.push({ label: labelOf(g.key, first, last, p) + (partial ? ' *' : ''),
-      start: base.d, end: last.d, fNav: last.f, bNav: last.b, fr, br, diff: fr - br });
+    out.push({label: labelOf(g.key, last, p) + (prev ? '' : ' *'), fr, br, diff: fr - br});
     prev = last;
   }
   return out;
@@ -406,76 +301,57 @@ function css(v){ return getComputedStyle(document.documentElement).getPropertyVa
 
 function render(){
   const data = filtered();
+  const amt = amount();
   const name = PERIOD_NAMES[period];
-  $('barTitle').textContent = `${name} returns`;
+  $('barTitle').textContent = `${name}: value of ${fmtRs(amt)} invested at the start of each period`;
   $('tableTitle').textContent = `${name} comparison`;
 
   if(data.length < 2){
     $('stats').innerHTML = '<div class="stat"><div class="k">Not enough data</div><div class="s">Pick a wider date range.</div></div>';
     $('tbody').innerHTML = '';
-    if(growthChart) growthChart.destroy(); if(barChart) barChart.destroy();
+    if(barChart){ barChart.destroy(); barChart = null; }
     return;
   }
-
-  currentRows = periodRows(data, period);
-  renderStats(data, currentRows);
-  renderTable(currentRows);
-  renderCharts(data, currentRows);
+  const rows = periodRows(data, period);
+  renderStats(data, rows, amt);
+  renderTable(rows, amt);
+  renderChart(rows, amt);
 }
 
-function renderStats(data, rows){
+function renderStats(data, rows, amt){
   const a = data[0], z = data[data.length - 1];
   const fT = z.f / a.f - 1, bT = z.b / a.b - 1;
-  const days = (z.d - a.d) / 864e5;
-  const cagr = (t) => Math.pow(1 + t, 365 / days) - 1;
-  const wins = rows.filter(r => r.diff > 0).length;
-  const best = rows.reduce((m, r) => r.diff > m.diff ? r : m, rows[0] || {diff:0});
-  const worst = rows.reduce((m, r) => r.diff < m.diff ? r : m, rows[0] || {diff:0});
+  const wins = rows.filter(r => r.diff >= 0).length;
   const unit = {week:'weeks', month:'months', year:'years', fy:'years'}[period];
-
-  const card = (k, v, s, c) => `<div class="stat"><div class="k">${k}</div><div class="v ${c || ''}">${v}</div><div class="s">${s || ''}</div></div>`;
+  const card = (k, v, s, c) => `<div class="stat"><div class="k">${k}</div><div class="v ${c || ''}">${v}</div><div class="s">${s}</div></div>`;
   $('stats').innerHTML =
-    card('Stallion Core return', fmtPct(fT), days >= 365 ? `CAGR ${fmtPct(cagr(fT))}` : `${Math.round(days)} days`, cls(fT)) +
-    card('BSE 500 return', fmtPct(bT), days >= 365 ? `CAGR ${fmtPct(cagr(bT))}` : `${Math.round(days)} days`, cls(bT)) +
-    card('Outperformance', fmtPct(fT - bT, true), fT >= bT ? 'Fund ahead of BSE 500' : 'Fund behind BSE 500', cls(fT - bT)) +
-    card(`Beat BSE 500`, `${wins} / ${rows.length}`, `${unit} (${rows.length ? Math.round(wins / rows.length * 100) : 0}% hit rate)`) +
-    (rows.length ? card('Best relative period', fmtPct(best.diff, true), best.label, 'pos') : '') +
-    (rows.length ? card('Worst relative period', fmtPct(worst.diff, true), worst.label, 'neg') : '');
+    card(`${fmtRs(amt)} in Stallion Core`, fmtRs(amt * (1 + fT)), `<span class="${cls(fT)}">${fmtPct(fT)}</span> · ${fmtDate(a.d)} to ${fmtDate(z.d)}`, cls(fT)) +
+    card(`${fmtRs(amt)} in BSE 500`, fmtRs(amt * (1 + bT)), `<span class="${cls(bT)}">${fmtPct(bT)}</span> · ${fmtDate(a.d)} to ${fmtDate(z.d)}`, cls(bT)) +
+    card('Stallion vs BSE 500', (fT >= bT ? '+' : '−') + fmtRs(Math.abs(amt * (fT - bT))),
+      `<span class="${cls(fT - bT)}">${fmtPct(fT - bT, true)}</span> · ahead in ${wins} of ${rows.length} ${unit}`, cls(fT - bT));
 }
 
-function renderTable(rows){
+function renderTable(rows, amt){
+  $('thead').innerHTML = `<tr><th>Period</th><th>Stallion Return</th><th>${fmtRs(amt)} → Stallion</th>
+    <th>BSE 500 Return</th><th>${fmtRs(amt)} → BSE 500</th><th>Difference</th></tr>`;
   $('tbody').innerHTML = rows.slice().reverse().map(r => `
     <tr>
-      <td>${r.label}</td><td>${fmtDate(r.start)}</td><td>${fmtDate(r.end)}</td>
-      <td>${fmtNum(r.fNav)}</td><td class="${cls(r.fr)}">${fmtPct(r.fr)}</td>
-      <td>${fmtNum(r.bNav)}</td><td class="${cls(r.br)}">${fmtPct(r.br)}</td>
+      <td>${r.label}</td>
+      <td class="${cls(r.fr)}">${fmtPct(r.fr)}</td><td>${fmtRs(amt * (1 + r.fr))}</td>
+      <td class="${cls(r.br)}">${fmtPct(r.br)}</td><td>${fmtRs(amt * (1 + r.br))}</td>
       <td class="${cls(r.diff)}"><b>${fmtPct(r.diff, true)}</b></td>
-      <td><span class="tag ${cls(r.diff)}">${r.diff >= 0 ? 'Outperformed' : 'Underperformed'}</span></td>
     </tr>`).join('');
 }
 
-function renderCharts(data, rows){
+function renderChart(rows, amt){
   const fund = css('--fund'), bench = css('--bench'), grid = css('--border'), muted = css('--muted');
   Chart.defaults.color = muted;
   Chart.defaults.font.family = 'system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif';
-
-  const a = data[0];
-  if(growthChart) growthChart.destroy();
-  growthChart = new Chart($('growthChart'), {
-    type: 'line',
-    data: {
-      labels: data.map(r => fmtDate(r.d)),
-      datasets: [
-        {label:'Stallion Core', data: data.map(r => +(r.f / a.f * 100).toFixed(2)), borderColor: fund, backgroundColor: fund, borderWidth: 2, pointRadius: 0, tension: .15},
-        {label:'BSE 500', data: data.map(r => +(r.b / a.b * 100).toFixed(2)), borderColor: bench, backgroundColor: bench, borderWidth: 2, pointRadius: 0, tension: .15}
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
-      plugins: {legend: {display: false}, tooltip: {callbacks: {label: c => `${c.dataset.label}: ₹${c.parsed.y.toFixed(2)}`}}},
-      scales: {x: {ticks: {maxTicksLimit: 8, autoSkip: true}, grid: {color: grid}}, y: {grid: {color: grid}}}
-    }
-  });
+  const fv = rows.map(r => +(amt * (1 + r.fr)).toFixed(2));
+  const bv = rows.map(r => +(amt * (1 + r.br)).toFixed(2));
+  // Zoom the axis around the invested amount so small differences are visible
+  const all = fv.concat(bv, [amt]);
+  const lo = Math.min(...all), hi = Math.max(...all), padY = (hi - lo) * 0.1 || amt * 0.01;
 
   if(barChart) barChart.destroy();
   barChart = new Chart($('barChart'), {
@@ -483,15 +359,19 @@ function renderCharts(data, rows){
     data: {
       labels: rows.map(r => r.label.replace('Wk ending ', '')),
       datasets: [
-        {label:'Stallion Core', data: rows.map(r => +(r.fr * 100).toFixed(2)), backgroundColor: fund},
-        {label:'BSE 500', data: rows.map(r => +(r.br * 100).toFixed(2)), backgroundColor: bench}
+        {label:'Stallion Core', data: fv, backgroundColor: fund, base: amt},
+        {label:'BSE 500', data: bv, backgroundColor: bench, base: amt}
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
-      plugins: {legend: {display: false}, tooltip: {callbacks: {label: c => `${c.dataset.label}: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y.toFixed(2)}%`}}},
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: c => {
+        const r = rows[c.dataIndex], ret = c.datasetIndex === 0 ? r.fr : r.br;
+        return `${c.dataset.label}: ${fmtRs(c.parsed.y)} (${fmtPct(ret)})`;
+      }}}},
       scales: {x: {ticks: {maxTicksLimit: 12, autoSkip: true}, grid: {display: false}},
-               y: {grid: {color: grid}, ticks: {callback: v => v + '%'}}}
+               y: {min: Math.max(0, lo - padY), max: hi + padY, grid: {color: grid},
+                   ticks: {callback: v => '₹' + v.toLocaleString('en-IN')}}}
     }
   });
 }
@@ -503,39 +383,26 @@ $('tabs').addEventListener('click', e => {
   period = b.dataset.p;
   render();
 });
-$('fromDate').addEventListener('change', () => { $('quick').value = ''; render(); });
-$('toDate').addEventListener('change', () => { $('quick').value = ''; render(); });
+$('amount').addEventListener('input', render);
+$('fromDate').addEventListener('change', () => { $('quick').value = 'custom'; render(); });
+$('toDate').addEventListener('change', () => { $('quick').value = 'custom'; render(); });
 $('quick').addEventListener('change', () => {
   if(!ALL.length) return;
   const last = ALL[ALL.length - 1].d, v = $('quick').value;
   let from = new Date(ALL[0].d);
-  const back = (m) => { const d = new Date(last); d.setMonth(d.getMonth() - m); return d; };
-  if(v === '1m') from = back(1);
-  else if(v === '3m') from = back(3);
+  const back = m => { const d = new Date(last); d.setMonth(d.getMonth() - m); return d; };
+  if(v === '3m') from = back(3);
   else if(v === '6m') from = back(6);
   else if(v === '1y') from = back(12);
   else if(v === '3y') from = back(36);
-  else if(v === '5y') from = back(60);
   else if(v === 'ytd') from = new Date(last.getFullYear(), 0, 1);
   if(from < ALL[0].d) from = ALL[0].d;
   $('fromDate').value = isoStr(from);
   $('toDate').value = isoStr(last);
   render();
 });
-$('csvBtn').addEventListener('click', () => {
-  const head = ['Period','Start','End','Stallion NAV','Stallion Return %','BSE 500','BSE 500 Return %','Difference (pp)','Result'];
-  const lines = [head.join(',')].concat(currentRows.map(r => [
-    `"${r.label}"`, fmtDate(r.start), fmtDate(r.end), r.fNav, (r.fr*100).toFixed(2),
-    r.bNav, (r.br*100).toFixed(2), (r.diff*100).toFixed(2), r.diff >= 0 ? 'Outperformed' : 'Underperformed'
-  ].join(',')));
-  const blob = new Blob([lines.join('\n')], {type: 'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `stallion_vs_bse500_${period}.csv`;
-  a.click();
-});
 
-loadFromRepo();
+load();
 </script>
 </body>
 </html>
